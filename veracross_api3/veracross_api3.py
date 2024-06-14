@@ -1,6 +1,7 @@
 import requests
 import time
 import datetime
+import time
 from urllib import parse
 
 
@@ -63,7 +64,7 @@ class Veracross:
         if "X-Rate-Limit-Remaining" in headers:
             self.rate_limit_remaining = int(headers["X-Rate-Limit-Remaining"])
 
-            now = int(datetime.datetime.now().strftime("%s"))
+            now = int(time.time())
             reset = int(headers["X-Rate-Limit-Reset"])
             wait = reset - now
             self.rate_limit_reset = int(wait)

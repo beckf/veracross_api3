@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "requests"]
 build-backend = "hatchling.build"
 
 [project]
@@ -18,5 +18,5 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/pypa/sampleproject"
-Issues = "https://github.com/pypa/sampleproject/issues"
+Homepage = "https://github.com/beckf/veracross_api3/"
+Issues = "https://github.com/beckf/veracross_api3/issues"
