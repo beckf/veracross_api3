@@ -15,23 +15,42 @@ class Veracross:
         self.client_secret = config["client_secret"]
         self.scopes = config["scopes"]
 
+        # Default page size
         self.page_size = 1000
 
+        # Requests Session
         self.session = requests.Session()
+
+        # Session Headers
         self.session.headers.update({'Accept': 'application/json',
                                      'X-Page-Size': str(self.page_size)
                                      })
 
+        # OAuth Token Expired
         self.token_expire_time = datetime.datetime.now() - datetime.timedelta(days=1)
 
+        # Rate limit defaults
         self.rate_limit_remaining = 300
         self.rate_limit_reset = 0
 
+        # DEBUG Logs
+        # When set, dump a bunch of info
+        self.debug = False
+
     def __repr__(self):
         if self.bearer_token:
-            return "Veracross_API3 connected to self.api_base_url"
+            return f"Veracross_API3 connected to {self.api_base_url}"
         else:
             return "Veracross_API3"
+
+    def debug_log(self, text):
+        """
+        If debug enabled - print stuff
+        :param text:
+        :return:
+        """
+        if self.debug:
+            print(text)
 
     def get_authorization_token(self):
         """
@@ -56,6 +75,8 @@ class Veracross:
             self.bearer_token = json["access_token"]
             self.session.headers.update({'Authorization': 'Bearer ' + self.bearer_token})
 
+            self.debug_log(f"Bearer token: {self.bearer_token}")
+
             return json["access_token"]
         except Exception as e:
             print(e)
@@ -70,8 +91,13 @@ class Veracross:
             self.rate_limit_reset = int(wait)
 
             if int(headers["X-Rate-Limit-Remaining"]) < 2:
-                print("VC rate limit reached. Waiting {} seconds.".format(wait))
+                self.debug_log("VC rate limit reached. Waiting {} seconds.".format(wait))
                 time.sleep(wait)
+
+            self.debug_log(f"X-Rate-Limit-Remaining Header: {headers['X-Rate-Limit-Remaining']}")
+            self.debug_log(f"X-Rate-Limit-Reset Header: {headers['X-Rate-Limit-Reset']}")
+            self.debug_log(f"This rate limit value: {self.rate_limit_remaining}")
+
         else:
             return False
 
@@ -87,13 +113,17 @@ class Veracross:
         else:
             url = self.api_base_url + endpoint
 
+        self.debug_log(f"V-Pull URL: {url}")
+
         # Get first page
         page = 1
         r = self.session.get(url)
 
+        self.debug_log(f"V-Pull HTTP Status Code: {r.status_code}")
+
         if r.status_code == 401:
             # Possible a scope is missing
-            print(r.text)
+            self.debug_log(r.text)
             return None
 
         if r.status_code == 200:
@@ -101,6 +131,7 @@ class Veracross:
             data = r.json()
             data = data['data']
             last_count = len(data)
+            self.debug_log("V-Pull data length page 1: {}".format(len(data)))
         else:
             return None
 
@@ -114,5 +145,7 @@ class Veracross:
                 next_page = r.json()
                 last_count = len(next_page['data'])
                 data = data + next_page['data']
+
+                self.debug_log("V-Pull data length: {}".format(len(data)))
 
         return data
