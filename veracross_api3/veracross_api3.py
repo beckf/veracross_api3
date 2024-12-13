@@ -115,51 +115,72 @@ class Veracross:
 
         self.debug_log(f"V-Pull URL: {url}")
 
-        # Get first page
-        page = 1
-        r = self.session.get(url)
+        # defaults
+        page = 0
+        data =list()
 
-        self.debug_log(f"V-Pull HTTP Headers: {r.headers}")
-        self.debug_log(f"V-Pull HTTP Status Code: {r.status_code}")
+        # r = self.session.get(url)
+        #
+        # self.debug_log(f"V-Pull HTTP Headers: {r.headers}")
+        # self.debug_log(f"V-Pull HTTP Status Code: {r.status_code}")
+        #
+        # if r.status_code == 401:
+        #     # Possible a scope is missing
+        #     self.debug_log(f"V-Pull 401: Missing Scope?")
+        #     self.debug_log(r.text)
+        #     return None
+        #
+        # if r.status_code == 200:
+        #     self.check_rate_limit(headers=r.headers)
+        #     data = r.json()
+        #     data = data['data']
+        #     last_count = len(data)
+        #     self.debug_log("V-Pull data length page 1: {}".format(len(data)))
+        # else:
+        #     return None
 
-        if r.status_code == 401:
-            # Possible a scope is missing
-            self.debug_log(f"V-Pull 401: Missing Scope?")
-            self.debug_log(r.text)
-            return None
+        while True:
+            try:
+                # Increment Page Number
+                page += 1
 
-        if r.status_code == 200:
-            self.check_rate_limit(headers=r.headers)
-            data = r.json()
-            data = data['data']
-            last_count = len(data)
-            self.debug_log("V-Pull data length page 1: {}".format(len(data)))
-        else:
-            return None
+                r = self.session.get(url,
+                                     headers={'X-Page-Number': str(page)})
 
-        # Any other pages to get?
-        while last_count >= self.page_size:
-            page += 1
-            r = self.session.get(url,
-                                 headers={'X-Page-Number': str(page)})
+                self.debug_log(f"V-Pull Page Number: {page}")
+                self.debug_log(f"V-Pull HTTP Headers: {r.headers}")
+                self.debug_log(f"V-Pull HTTP Status Code: {r.status_code}")
 
-            self.debug_log("V-Pull Page Number: {}".format(page))
-            self.debug_log(f"V-Pull HTTP Headers: {r.headers}")
-            self.debug_log(f"V-Pull HTTP Status Code: {r.status_code}")
+                # Handle 401
+                if r.status_code == 401:
+                    # Possible a scope is missing
+                    self.debug_log(f"V-Pull 401: Missing Scope?")
+                    self.debug_log(r.text)
+                    return None
 
-            # Handle 401
-            if r.status_code == 401:
-                # Possible a scope is missing
-                self.debug_log(f"V-Pull 401: Missing Scope?")
-                self.debug_log(r.text)
+                # Handle 404
+                if r.status_code == 404:
+                    # Not found
+                    self.debug_log(f"V-Pull 404: Not found")
+                    self.debug_log(r.text)
+                    return None
+
+                if r.status_code == 200:
+                    self.check_rate_limit(headers=r.headers)
+                    this_data = r.json()
+                    this_count = len(this_data['data'])
+
+                    data = data + this_data['data']
+
+                    self.debug_log("V-Pull data length: {}".format(len(data)))
+
+                    if this_count == 0 or this_count < self.page_size:
+                        return data
+                else:
+                    return None
+
+            except Exception as e:
+                self.debug_log(f"V-Pull Error: {e}")
                 return None
 
-            if r.status_code == 200:
-                self.check_rate_limit(headers=r.headers)
-                next_page = r.json()
-                last_count = len(next_page['data'])
-                data = data + next_page['data']
 
-                self.debug_log("V-Pull data length: {}".format(len(data)))
-
-        return data
