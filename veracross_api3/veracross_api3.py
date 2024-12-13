@@ -16,7 +16,7 @@ class Veracross:
         self.scopes = config["scopes"]
 
         # Default page size
-        self.page_size = 1000
+        self.page_size = 500
 
         # Requests Session
         self.session = requests.Session()
@@ -119,10 +119,12 @@ class Veracross:
         page = 1
         r = self.session.get(url)
 
+        self.debug_log(f"V-Pull HTTP Headers: {r.headers}")
         self.debug_log(f"V-Pull HTTP Status Code: {r.status_code}")
 
         if r.status_code == 401:
             # Possible a scope is missing
+            self.debug_log(f"V-Pull 401: Missing Scope?")
             self.debug_log(r.text)
             return None
 
@@ -137,8 +139,20 @@ class Veracross:
 
         # Any other pages to get?
         while last_count >= self.page_size:
+            page += 1
             r = self.session.get(url,
-                                 headers={'X-Page-Number': str(page + 1)})
+                                 headers={'X-Page-Number': str(page)})
+
+            self.debug_log("V-Pull Page Number: {}".format(page))
+            self.debug_log(f"V-Pull HTTP Headers: {r.headers}")
+            self.debug_log(f"V-Pull HTTP Status Code: {r.status_code}")
+
+            # Handle 401
+            if r.status_code == 401:
+                # Possible a scope is missing
+                self.debug_log(f"V-Pull 401: Missing Scope?")
+                self.debug_log(r.text)
+                return None
 
             if r.status_code == 200:
                 self.check_rate_limit(headers=r.headers)
