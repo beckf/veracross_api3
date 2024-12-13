@@ -119,26 +119,6 @@ class Veracross:
         page = 0
         data =list()
 
-        # r = self.session.get(url)
-        #
-        # self.debug_log(f"V-Pull HTTP Headers: {r.headers}")
-        # self.debug_log(f"V-Pull HTTP Status Code: {r.status_code}")
-        #
-        # if r.status_code == 401:
-        #     # Possible a scope is missing
-        #     self.debug_log(f"V-Pull 401: Missing Scope?")
-        #     self.debug_log(r.text)
-        #     return None
-        #
-        # if r.status_code == 200:
-        #     self.check_rate_limit(headers=r.headers)
-        #     data = r.json()
-        #     data = data['data']
-        #     last_count = len(data)
-        #     self.debug_log("V-Pull data length page 1: {}".format(len(data)))
-        # else:
-        #     return None
-
         while True:
             try:
                 # Increment Page Number
