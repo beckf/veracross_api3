@@ -169,6 +169,9 @@ class Veracross:
 
         return data
 
+    # Backwards compatibility for callers using the former method name.
+    pull = get
+
     def post(self, endpoint, data=None, parameters=None):
         """
         Post data to a Veracross API endpoint.

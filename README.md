@@ -1,5 +1,5 @@
 # Veracross API v3 Python Library
-Provides an easy way to pull information from the Veracross API v3 using Python.
+Provides an easy way to get information from the Veracross API v3 using Python.
 
 Rate limiting and pagination will be handled automatically.
 
@@ -27,18 +27,21 @@ vc = v.Veracross(c)
 # Additional parameters are passed using a dictionary.
 
 # Return all faculty and staff
-data = vc.pull("staff_faculty")
+data = vc.get("staff_faculty")
 print(data)
 
 # Return one faculty and staff member by id
-data = vc.pull("staff_faculty/99999")
+data = vc.get("staff_faculty/99999")
 print(data)
 
-# Pass url parameters in a dictionary to the pull method.
+# Pass url parameters in a dictionary to the get method.
 # Return all faculty staff updated after 2019-01-01
 param = {"faculty_type": "12"}
-data = vc.pull("staff_faculty", parameters=param)
+data = vc.get("staff_faculty", parameters=param)
 print(data)
+
+# The former pull method name remains available for existing code.
+data = vc.pull("staff_faculty")
 
 # Return the amount of requests left in rate limiting
 vc.rate_limit_remaining
@@ -49,4 +52,3 @@ vc.rate_limit_reset
 ```
 
 All data will be returned as a dictionary.
-
