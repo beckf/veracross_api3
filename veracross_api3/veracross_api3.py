@@ -101,9 +101,9 @@ class Veracross:
         else:
             return False
 
-    def pull(self, endpoint, parameters=None):
+    def get(self, endpoint, parameters=None):
         """
-        Pull requested data from veracross api.
+        Get requested data from veracross api.
         :return: data
         """
         self.get_authorization_token()
@@ -113,18 +113,23 @@ class Veracross:
         else:
             url = self.api_base_url + endpoint
 
-        self.debug_log(f"V-Pull URL: {url}")
+        self.debug_log(f"V-Get URL: {url}")
+
+        # Why are we doing it this way?
+        # First page then other pages?
+        # If one record is returned a dictionary is returned.
+        # If multiple records are returned it is returning a list.
 
         # Get first page
         page = 1
         r = self.session.get(url)
 
-        self.debug_log(f"V-Pull HTTP Headers: {r.headers}")
-        self.debug_log(f"V-Pull HTTP Status Code: {r.status_code}")
+        self.debug_log(f"V-Get HTTP Headers: {r.headers}")
+        self.debug_log(f"V-Get HTTP Status Code: {r.status_code}")
 
         if r.status_code == 401:
             # Possible a scope is missing
-            self.debug_log(f"V-Pull 401: Missing Scope?")
+            self.debug_log(f"V-Get 401: Missing Scope?")
             self.debug_log(r.text)
             return None
 
@@ -133,7 +138,7 @@ class Veracross:
             data = r.json()
             data = data['data']
             last_count = len(data)
-            self.debug_log("V-Pull data length page 1: {}".format(len(data)))
+            self.debug_log("V-Get data length page 1: {}".format(len(data)))
         else:
             return None
 
@@ -143,14 +148,14 @@ class Veracross:
             r = self.session.get(url,
                                  headers={'X-Page-Number': str(page)})
 
-            self.debug_log("V-Pull Page Number: {}".format(page))
-            self.debug_log(f"V-Pull HTTP Headers: {r.headers}")
-            self.debug_log(f"V-Pull HTTP Status Code: {r.status_code}")
+            self.debug_log("V-Get Page Number: {}".format(page))
+            self.debug_log(f"V-Get HTTP Headers: {r.headers}")
+            self.debug_log(f"V-Get HTTP Status Code: {r.status_code}")
 
             # Handle 401
             if r.status_code == 401:
                 # Possible a scope is missing
-                self.debug_log(f"V-Pull 401: Missing Scope?")
+                self.debug_log(f"V-Get 401: Missing Scope?")
                 self.debug_log(r.text)
                 return None
 
@@ -160,6 +165,41 @@ class Veracross:
                 last_count = len(next_page['data'])
                 data = data + next_page['data']
 
-                self.debug_log("V-Pull data length: {}".format(len(data)))
+                self.debug_log("V-Get data length: {}".format(len(data)))
 
         return data
+
+    def post(self, endpoint, data=None, parameters=None):
+        """
+        Post data to a Veracross API endpoint.
+
+        :param endpoint: API endpoint path relative to the v3 base URL
+        :param data: request body to send as JSON
+        :param parameters: optional URL query parameters
+        :return: response JSON as a Python dictionary, or None on failure
+        """
+        self.get_authorization_token()
+
+        url = self.api_base_url + endpoint
+        self.debug_log(f"V-Post URL: {url}")
+
+        r = self.session.post(url, params=parameters, json=data)
+
+        self.debug_log(f"V-Post HTTP Headers: {r.headers}")
+        self.debug_log(f"V-Post HTTP Status Code: {r.status_code}")
+
+        if r.status_code == 401:
+            self.debug_log("V-Post 401: Missing Scope?")
+            self.debug_log(r.text)
+            return None
+
+        if not r.ok:
+            self.debug_log(r.text)
+            return None
+
+        self.check_rate_limit(headers=r.headers)
+
+        if not r.content:
+            return {}
+
+        return r.json()
