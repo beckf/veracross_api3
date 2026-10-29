@@ -206,3 +206,44 @@ class Veracross:
             return {}
 
         return r.json()
+
+    def patch(self, endpoint, data=None, parameters=None):
+        """
+        Patch (update) a record at a Veracross API endpoint.
+
+        :param endpoint: API endpoint path relative to the v3 base URL
+        :param data: record fields to update; wrapped as {"data": ...} if not already
+        :param parameters: optional URL query parameters
+        :return: response JSON as a Python dictionary, or None on failure
+        """
+        self.get_authorization_token()
+
+        # Veracross requires the record to be wrapped in a "data" object
+        if data is not None and not (isinstance(data, dict) and "data" in data):
+            data = {"data": data}
+
+        url = self.api_base_url + endpoint
+        self.debug_log(f"V-Patch URL: {url}")
+
+        self.debug_log(f"V-Patch Data: {data}")
+
+        r = self.session.patch(url, params=parameters, json=data)
+
+        self.debug_log(f"V-Patch HTTP Headers: {r.headers}")
+        self.debug_log(f"V-Patch HTTP Status Code: {r.status_code}")
+
+        if r.status_code == 401:
+            self.debug_log("V-Patch 401: Missing Scope?")
+            self.debug_log(r.text)
+            return None
+
+        if not r.ok:
+            self.debug_log(r.text)
+            return None
+
+        self.check_rate_limit(headers=r.headers)
+
+        if not r.content:
+            return {}
+
+        return r.json()
