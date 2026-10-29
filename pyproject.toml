@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "veracross_api3"
-version = "0.0.9"
+version = "1.0"
 authors = [
   { name="Forrest Beck", email="forrest.beck@gmail.com" },
 ]
@@ -16,6 +16,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = ["requests"]
 
 [project.urls]
 Homepage = "https://github.com/beckf/veracross_api3/"
